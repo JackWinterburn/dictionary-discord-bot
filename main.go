@@ -2,14 +2,14 @@ package main
 
 import (
 	"fmt"
+	"os"
 
 	"github.com/bwmarrin/discordgo"
 )
 
 // BotID will be the alias for the bot
 var BotID string
-
-const token string = "NzgyMDEyMzg1NDU1MjQzMjc1.X8F_yQ.apG48ylBTX5gmJycAYJrwoSOcFc"
+var token string = os.Getenv("TOKEN")
 
 func openConnection() {
 	dg, err := discordgo.New("Bot " + token)
