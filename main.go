@@ -3,6 +3,7 @@ package main
 import (
 	"fmt"
 	"os"
+	"strings"
 
 	"github.com/bwmarrin/discordgo"
 )
@@ -48,7 +49,7 @@ func messageHandler(s *discordgo.Session, m *discordgo.MessageCreate) {
 	// make sure the bot only replies in science channels
 	for i := 0; i < len(channels); i++ {
 		if m.ChannelID == channels[i] {
-			if m.Content == "!osmosis" {
+			if strings.ToLower(m.Content) == "!osmosis" {
 				_, _ = s.ChannelMessageSend(m.ChannelID, "osmosis is the net movement of water against the conc. gradient")
 			}
 		}
