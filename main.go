@@ -42,6 +42,14 @@ func openConnection() {
 	return
 }
 
+// format the command from a message to suit wikipedias criteria
+func formatMessage(msg string) string {
+	msg = msg[1:]
+	msg = strings.ToLower(msg)
+	msg = strings.Replace(msg, " ", "_", -1)
+	return msg
+}
+
 func messageHandler(s *discordgo.Session, m *discordgo.MessageCreate) {
 	if m.Author.ID == BotID {
 		return
@@ -49,8 +57,9 @@ func messageHandler(s *discordgo.Session, m *discordgo.MessageCreate) {
 	// make sure the bot only replies in science channels
 	for i := 0; i < len(channels); i++ {
 		if m.ChannelID == channels[i] {
-			if strings.ToLower(m.Content) == "!osmosis" {
-				_, _ = s.ChannelMessageSend(m.ChannelID, "osmosis is the net movement of water against the conc. gradient")
+			if strings.ToLower(m.Content[0:1]) == "!" {
+				msg := formatMessage(m.Content)
+				_, _ = s.ChannelMessageSend(m.ChannelID, "https://en.wikipedia.org/wiki/"+msg)
 			}
 		}
 	}
