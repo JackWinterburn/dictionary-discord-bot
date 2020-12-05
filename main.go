@@ -6,6 +6,7 @@ import (
 	"strings"
   "net/http"
   "io/ioutil"
+  "encoding/json"
 
 	"github.com/bwmarrin/discordgo"
 )
@@ -64,6 +65,10 @@ func messageHandler(s *discordgo.Session, m *discordgo.MessageCreate) {
         defer resp.Body.Close()
 
         jsonResponse, _ := ioutil.ReadAll(resp.Body)
+        var definition []byte
+        json.Unmarshal([]byte(jsonResponse), &definition)
+        fmt.Printf(string(definition))
+
         fmt.Printf("%s\n", jsonResponse)
 				_, _ = s.ChannelMessageSend(m.ChannelID, "https://en.wikipedia.org/wiki/"+m.Content)
 			}
