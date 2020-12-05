@@ -1,6 +1,6 @@
 # science-discord-bot
 to use the bot you with have needed to have created one on the dev platform
-> [Discord dev platform](https://com/developers) |
+> [Discord dev platform](https://discord.com/developers) |
 make sure to grab your token in the "bot" section
 
 create a file called `.env` in the working directory and input `export TOKEN=<your bot token>`
