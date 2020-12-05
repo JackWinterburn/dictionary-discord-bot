@@ -4,6 +4,8 @@ import (
 	"fmt"
 	"os"
 	"strings"
+  "net/http"
+  "io/ioutil"
 
 	"github.com/bwmarrin/discordgo"
 )
@@ -58,8 +60,12 @@ func messageHandler(s *discordgo.Session, m *discordgo.MessageCreate) {
 	for i := 0; i < len(channels); i++ {
 		if m.ChannelID == channels[i] {
 			if strings.ToLower(m.Content[0:1]) == "!" {
-				msg := formatMessage(m.Content)
-				_, _ = s.ChannelMessageSend(m.ChannelID, "https://en.wikipedia.org/wiki/"+msg)
+        resp, _ := http.Get("https://api.dictionaryapi.dev/api/v2/entries/en/" + m.Content)
+        defer resp.Body.Close()
+
+        jsonResponse, _ := ioutil.ReadAll(resp.Body)
+        fmt.Printf("%s\n", jsonResponse)
+				_, _ = s.ChannelMessageSend(m.ChannelID, "https://en.wikipedia.org/wiki/"+m.Content)
 			}
 		}
 	}
