@@ -1,5 +1,5 @@
 # science-discord-bot
-to use the bot you with have needed to have created on on the dev platform
+to use the bot you with have needed to have created one on the dev platform
 > [Discord dev platform](https://com/developers) |
 make sure to grab your token in the "bot" section
 
