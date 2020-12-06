@@ -1,12 +1,11 @@
 package main
 
 import (
-	"fmt"
+	f "fmt"
+	"io/ioutil"
+	"net/http"
 	"os"
 	"strings"
-  "net/http"
-  "io/ioutil"
-  "encoding/json"
 
 	"github.com/bwmarrin/discordgo"
 )
@@ -19,13 +18,13 @@ var channels = [...]string{"773318228184137759", "773318250805198848", "77331828
 func openConnection() {
 	dg, err := discordgo.New("Bot " + token)
 	if err != nil {
-		fmt.Println(err.Error())
+		f.Println(err.Error())
 		return
 	}
 
 	u, err := dg.User("@me")
 	if err != nil {
-		fmt.Println(err.Error())
+		f.Println(err.Error())
 	}
 
 	BotID = u.ID
@@ -34,23 +33,71 @@ func openConnection() {
 
 	err = dg.Open()
 	if err != nil {
-		fmt.Println(err.Error())
+		f.Println(err.Error())
 		return
 	}
 
-	fmt.Println("bot is running!")
+	f.Println("bot is running!")
 
 	// keeps the bot running
 	<-make(chan struct{})
 	return
 }
 
-// format the command from a message to suit wikipedias criteria
-func formatMessage(msg string) string {
-	msg = msg[1:]
-	msg = strings.ToLower(msg)
-	msg = strings.Replace(msg, " ", "_", -1)
-	return msg
+func in(a string, list []string) bool {
+	for _, b := range list {
+		if b == a {
+			return true
+		}
+	}
+	return false
+}
+
+// parses a json string to get definitions from dictionary api
+func parseJSONForDefinition(JSONString string) []string {
+	definitions := strings.Split(JSONString, "\"definition\":")
+	definitions = definitions[1:]
+
+	for def := range definitions {
+		definition := ""
+		str := definitions[def]
+		for idx := 0; idx < len(str); idx++ {
+			currLetter := string(str[idx+1])
+			if currLetter == "\"" {
+				definitions[def] = definition
+				break
+			} else {
+				definition += currLetter
+			}
+		}
+	}
+	return definitions
+}
+
+func convertDefinitionsToString(msg string, definitions ...string) string {
+	str := "Definitions for " + msg + ":\n\n"
+	for idx, def := range definitions {
+		if idx == 0 {
+			str += ">>> " + "• " + def
+		} else {
+			str += "\n\n ━━━━━━━━━━━━━━━━━━\n" + "• " + def
+		}
+	}
+	return str
+}
+
+func getDefenitionsFromJSONString(JSONString string, msg string) string {
+	// the api will return this JSON string if no defenitions are found
+	errmsg := `{"title":"No Definitions Found","message":"Sorry pal, we couldn't find definitions for the word you were looking for.","resolution":"You can try the search again at later time or head to the web instead."}`
+
+	if JSONString == errmsg {
+		return "I couldn't find a definition for you..."
+	}
+
+	parsedDefinitions := parseJSONForDefinition(JSONString)
+	definitions := convertDefinitionsToString(msg, parsedDefinitions...)
+
+	return definitions
 }
 
 func messageHandler(s *discordgo.Session, m *discordgo.MessageCreate) {
@@ -60,17 +107,20 @@ func messageHandler(s *discordgo.Session, m *discordgo.MessageCreate) {
 	// make sure the bot only replies in science channels
 	for i := 0; i < len(channels); i++ {
 		if m.ChannelID == channels[i] {
-			if strings.ToLower(m.Content[0:1]) == "!" {
-        resp, _ := http.Get("https://api.dictionaryapi.dev/api/v2/entries/en/" + m.Content)
-        defer resp.Body.Close()
+			if strings.ToLower(m.Content[0:2]) == "d!" {
+				m.Content = m.Content[2:]
+				resp, err := http.Get("https://api.dictionaryapi.dev/api/v2/entries/en/" + m.Content)
+				if err != nil {
+					f.Println(err)
+				}
+				defer resp.Body.Close()
 
-        jsonResponse, _ := ioutil.ReadAll(resp.Body)
-        var definition []byte
-        json.Unmarshal([]byte(jsonResponse), &definition)
-        fmt.Printf(string(definition))
+				// get the actual JSON from the api
+				JSONResponse, _ := ioutil.ReadAll(resp.Body)
 
-        fmt.Printf("%s\n", jsonResponse)
-				_, _ = s.ChannelMessageSend(m.ChannelID, "https://en.wikipedia.org/wiki/"+m.Content)
+				m.Content = "**" + m.Content + "**"
+				definitions := getDefenitionsFromJSONString(string(JSONResponse), m.Content)
+				_, _ = s.ChannelMessageSend(m.ChannelID, definitions)
 			}
 		}
 	}
