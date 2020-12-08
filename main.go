@@ -6,6 +6,7 @@ import (
 	"net/http"
 	"os"
 	"strings"
+	"sync"
 
 	"github.com/bwmarrin/discordgo"
 )
@@ -13,6 +14,7 @@ import (
 // BotID will be the alias for the bot
 var BotID string
 var token string = os.Getenv("TOKEN")
+var wg sync.WaitGroup
 
 func openConnection() {
 	dg, err := discordgo.New("Bot " + token)
@@ -38,9 +40,9 @@ func openConnection() {
 
 	f.Println("bot is running!")
 
-	// keeps the bot running
-	<-make(chan struct{})
-	return
+	// // keeps the bot running
+	// <-make(chan struct{})
+	// return
 }
 
 func in(a string, list []string) bool {
@@ -74,7 +76,7 @@ func parseJSONForDefinition(JSONString string) []string {
 }
 
 func convertDefinitionsToString(msg string, definitions ...string) string {
-	str := "Definitions for " + msg + ":\n\n"
+	str := "Definitions for " + msg + ":\n"
 	for idx, def := range definitions {
 		if idx == 0 {
 			str += ">>> " + "• " + def
@@ -103,7 +105,7 @@ func messageHandler(s *discordgo.Session, m *discordgo.MessageCreate) {
 	if m.Author.ID == BotID {
 		return
 	}
-	if strings.ToLower(m.Content[0:2]) == "d!" {
+	if len(m.Content) >= 2 && strings.ToLower(m.Content[0:2]) == "d!" {
 		m.Content = m.Content[2:]
 		resp, err := http.Get("https://api.dictionaryapi.dev/api/v2/entries/en/" + m.Content)
 		if err != nil {
@@ -121,5 +123,8 @@ func messageHandler(s *discordgo.Session, m *discordgo.MessageCreate) {
 }
 
 func main() {
+	wg.Add(1)
 	openConnection()
+	wg.Wait()
+
 }
