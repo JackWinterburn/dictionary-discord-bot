@@ -39,10 +39,6 @@ func openConnection() {
 	}
 
 	f.Println("bot is running!")
-
-	// // keeps the bot running
-	// <-make(chan struct{})
-	// return
 }
 
 func in(a string, list []string) bool {
@@ -126,5 +122,4 @@ func main() {
 	wg.Add(1)
 	openConnection()
 	wg.Wait()
-
 }
